@@ -1,5 +1,7 @@
 # semantic-release-keep-a-changelog
 
+[![codecov](https://codecov.io/gh/shaftoe/semantic-release-keep-a-changelog/graph/badge.svg?token=kvk1MAWo7l)](https://codecov.io/gh/shaftoe/semantic-release-keep-a-changelog)
+
 An opinionated [semantic-release](https://semantic-release.gitbook.io/) plugin that replaces both `@semantic-release/release-notes-generator` and `@semantic-release/changelog`, producing a [Keep a Changelog](https://keepachangelog.com) formatted `CHANGELOG.md` from conventional commits with zero configuration.
 
 ## Install
