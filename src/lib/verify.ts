@@ -1,5 +1,3 @@
-import AggregateErrorPkg from "aggregate-error";
-
 const isNonEmptyString = (value: unknown): value is string =>
 	typeof value === "string" && value.trim().length > 0;
 
@@ -34,6 +32,6 @@ export function verifyConditions(
 	}
 
 	if (errors.length > 0) {
-		throw new AggregateErrorPkg(errors);
+		throw new AggregateError(errors, "Validation errors");
 	}
 }

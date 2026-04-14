@@ -92,7 +92,7 @@ export async function generateNotes(
 
 	const changelogContext: Record<string, unknown> = {
 		version: nextRelease.version,
-		host: `${protocol}://${hostname}${port ? `:${port}` : ''}`,
+		host: `${protocol}://${hostname}${port ? `:${port}` : ""}`,
 		owner,
 		repository,
 		previousTag,
