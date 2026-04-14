@@ -1,0 +1,113 @@
+import { format } from "node:url";
+import { writeChangelogStream } from "conventional-changelog-writer";
+import { filterRevertedCommitsSync } from "conventional-commits-filter";
+import { CommitParser } from "conventional-commits-parser";
+import getStream from "get-stream";
+import intoStream from "into-stream";
+import { writerOpts } from "./keep-a-changelog.js";
+
+/**
+ * GitHub-specific configuration for parsing repository URLs and generating reference links.
+ */
+const GITHUB_CONFIG = {
+	hostname: "github.com",
+	issue: "issues",
+	commit: "commit",
+	referenceActions: [
+		"close",
+		"closes",
+		"closed",
+		"fix",
+		"fixes",
+		"fixed",
+		"resolve",
+		"resolves",
+		"resolved",
+	],
+	issuePrefixes: ["#", "gh-"],
+};
+
+interface SemanticReleaseCommit {
+	hash: string;
+	message: string;
+	committerDate: string;
+}
+
+interface Context {
+	commits: SemanticReleaseCommit[];
+	lastRelease: { gitTag?: string; gitHead?: string; version?: string };
+	nextRelease: { gitTag?: string; gitHead?: string; version: string };
+	options: { repositoryUrl: string };
+	cwd: string;
+}
+
+/**
+ * Generate release notes in Keep a Changelog format.
+ *
+ * Parses conventional commits, maps types to KaC sections,
+ * and renders markdown via conventional-changelog-writer.
+ * GitHub-only — no multi-host support.
+ */
+export async function generateNotes(
+	_pluginConfig: Record<string, unknown>,
+	context: Context,
+): Promise<string | undefined> {
+	const { commits, lastRelease, nextRelease, options } = context;
+	const repositoryUrl = options.repositoryUrl.replace(/\.git$/i, "");
+
+	// Parse repository URL to extract owner and repository
+	const [match, auth, host, urlPath] =
+		/^(?!.+:\/\/)(?:(?<auth>.*)@)?(?<host>.*?):(?<path>.*)$/.exec(
+			repositoryUrl,
+		) || [];
+
+	let { hostname, port, pathname, protocol } = new URL(
+		match ? `ssh://${auth ? `${auth}@` : ""}${host}/${urlPath}` : repositoryUrl,
+	);
+
+	port = protocol.includes("ssh") ? "" : port;
+	protocol = protocol && /http[^s]/.test(protocol) ? "http" : "https";
+
+	const [, owner, repository] =
+		/^\/(?<owner>[^/]+)?\/?(?<repository>.+)?$/.exec(pathname) || [];
+
+	const { issue, commit, referenceActions, issuePrefixes } = GITHUB_CONFIG;
+
+	// Parse commits using conventional-commits-parser
+	const parser = new CommitParser({
+		referenceActions,
+		issuePrefixes,
+	});
+
+	const parsedCommits = filterRevertedCommitsSync(
+		commits
+			.filter(({ message }) => message.trim())
+			.map((rawCommit) => ({
+				...rawCommit,
+				...parser.parse(rawCommit.message),
+			})),
+	);
+
+	const previousTag = lastRelease.gitTag || lastRelease.gitHead;
+	const currentTag = nextRelease.gitTag || nextRelease.gitHead;
+
+	const changelogContext: Record<string, unknown> = {
+		version: nextRelease.version,
+		host: format({ protocol, hostname, port }),
+		owner,
+		repository,
+		previousTag,
+		currentTag,
+		linkCompare: Boolean(currentTag && previousTag),
+		issue,
+		commit,
+	};
+
+	// Render through conventional-changelog-writer with our Keep a Changelog templates
+	return getStream(
+		intoStream
+			.object(parsedCommits)
+			// biome-ignore lint/suspicious/noExplicitAny: third-party types are untyped
+			.pipe(writeChangelogStream(changelogContext as any, writerOpts as any)),
+	);
+}
