@@ -175,45 +175,6 @@ describe("prepare", () => {
 		}
 	});
 
-	it("uses custom changelogFile", async () => {
-		const dir = await makeTmpDir();
-		const context = {
-			cwd: dir,
-			nextRelease: { notes: "## 2.0.0\n\n### Removed\n- old api" },
-			logger: { log: () => {} },
-		};
-		try {
-			await prepare(
-				{ changelogFile: "HISTORY.md" },
-				context as Parameters<typeof prepare>[1],
-			);
-			const content = await readFile(join(dir, "HISTORY.md"), "utf-8");
-			expect(content).toContain("## 2.0.0");
-			expect(content).toContain("### Removed");
-		} finally {
-			await rm(dir, { recursive: true, force: true });
-		}
-	});
-
-	it("uses custom changelogTitle", async () => {
-		const dir = await makeTmpDir();
-		const context = {
-			cwd: dir,
-			nextRelease: { notes: "## 1.0.0\n\n### Added\n- feature" },
-			logger: { log: () => {} },
-		};
-		try {
-			await prepare(
-				{ changelogTitle: "# My Custom Title" },
-				context as Parameters<typeof prepare>[1],
-			);
-			const content = await readFile(join(dir, "CHANGELOG.md"), "utf-8");
-			expect(content.startsWith("# My Custom Title")).toBe(true);
-		} finally {
-			await rm(dir, { recursive: true, force: true });
-		}
-	});
-
 	it("appends after [Unreleased] with no newline after it", async () => {
 		const dir = await makeTmpDir();
 		const context = {

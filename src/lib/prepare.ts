@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { resolveConfig } from "./resolve-config.js";
+import { CHANGELOG_TITLE, DEFAULT_CHANGELOG_FILE } from "./constants.js";
 
 interface PrepareContext {
 	cwd: string;
@@ -179,11 +179,11 @@ export function insertReleaseNotes(
  *   [X.Y.Z]:      repo/compare/vPREV...vX.Y.Z   (one per release)
  */
 export async function prepare(
-	pluginConfig: Record<string, unknown>,
+	_pluginConfig: Record<string, unknown>,
 	{ cwd, nextRelease: { notes }, logger }: PrepareContext,
 ): Promise<void> {
-	const { changelogFile, changelogTitle } = resolveConfig(pluginConfig);
-	const changelogPath = resolve(cwd, changelogFile);
+	const changelogPath = resolve(cwd, DEFAULT_CHANGELOG_FILE);
+	const changelogTitle = CHANGELOG_TITLE;
 
 	if (notes) {
 		await ensureFile(changelogPath);

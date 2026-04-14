@@ -1,39 +1,27 @@
 import { describe, expect, it } from "bun:test";
-import { access, copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
+import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { generateNotes } from "../src/lib/generate-notes.js";
 import { prepare } from "../src/lib/prepare.js";
-import { verifyConditions } from "../src/lib/verify.js";
 import { expectValidMarkdown } from "./helpers/lint-markdown.js";
 
 async function makeTmpDir(): Promise<string> {
 	return mkdtemp(join(tmpdir(), "kac-integ-"));
 }
 
-// Simulates a semantic-release pipeline for a given set of commits + config
+// Simulates a semantic-release pipeline for a given set of commits
 async function simulateRelease(opts: {
 	commits: { hash: string; message: string; committerDate: string }[];
 	lastRelease: Record<string, unknown>;
 	nextRelease: { version: string; gitTag?: string };
 	repositoryUrl?: string;
-	pluginConfig?: Record<string, unknown>;
 	cwd: string;
 }) {
-	const {
-		commits,
-		lastRelease,
-		nextRelease,
-		repositoryUrl,
-		pluginConfig,
-		cwd,
-	} = opts;
+	const { commits, lastRelease, nextRelease, repositoryUrl, cwd } = opts;
 
-	// Step 1: verify
-	verifyConditions(pluginConfig);
-
-	// Step 2: generateNotes
-	const notes = await generateNotes(pluginConfig ?? {}, {
+	// Step 1: generateNotes
+	const notes = await generateNotes({}, {
 		commits,
 		lastRelease,
 		nextRelease,
@@ -43,17 +31,15 @@ async function simulateRelease(opts: {
 		cwd,
 	} as Parameters<typeof generateNotes>[1]);
 
-	// Step 3: prepare (writes to disk)
-	await prepare(pluginConfig ?? {}, {
+	// Step 2: prepare (writes to disk)
+	await prepare({}, {
 		cwd,
 		nextRelease: { notes: notes ?? undefined },
 		logger: { log: () => {} },
 	} as Parameters<typeof prepare>[1]);
 
 	// Return the file contents
-	const changelogFile =
-		(pluginConfig?.changelogFile as string) || "CHANGELOG.md";
-	return readFile(join(cwd, changelogFile), "utf-8");
+	return readFile(join(cwd, "CHANGELOG.md"), "utf-8");
 }
 
 /** Find the position of a version header like "## [1.0.0]" */
@@ -341,59 +327,6 @@ describe("integration: full release pipeline", () => {
 
 			// Produced markdown must be valid
 			expectValidMarkdown(content);
-		} finally {
-			await rm(cwd, { recursive: true, force: true });
-		}
-	});
-
-	it("respects custom changelogFile and changelogTitle", async () => {
-		const cwd = await makeTmpDir();
-		try {
-			const content = await simulateRelease({
-				commits: [
-					{
-						hash: "abc1234",
-						message: "feat: custom path test",
-						committerDate: "2024-01-01",
-					},
-				],
-				lastRelease: {},
-				nextRelease: { version: "3.0.0", gitTag: "v3.0.0" },
-				pluginConfig: {
-					changelogFile: "docs/HISTORY.md",
-					changelogTitle: "# Release Notes\n\nTrack changes here.",
-				},
-				cwd,
-			});
-
-			// Custom file written
-			const filePath = join(cwd, "docs/HISTORY.md");
-			const fileContent = await readFile(filePath, "utf-8");
-			expect(fileContent).toContain("# Release Notes");
-			expect(fileContent).toContain("custom path test");
-
-			// Default CHANGELOG.md should NOT exist
-			expect(access(join(cwd, "CHANGELOG.md"))).rejects.toThrow();
-
-			// Original content var should match file
-			expect(content).toBe(fileContent);
-
-			// Produced markdown must be valid
-			expectValidMarkdown(content);
-		} finally {
-			await rm(cwd, { recursive: true, force: true });
-		}
-	});
-
-	it("verifyConditions rejects invalid config before any file is written", async () => {
-		const cwd = await makeTmpDir();
-		try {
-			expect(() =>
-				verifyConditions({ changelogFile: 123, changelogTitle: "" }),
-			).toThrow();
-
-			// No file should have been created
-			expect(access(join(cwd, "CHANGELOG.md"))).rejects.toThrow();
 		} finally {
 			await rm(cwd, { recursive: true, force: true });
 		}
