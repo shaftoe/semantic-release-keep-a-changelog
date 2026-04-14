@@ -50,7 +50,7 @@ interface Context {
 export async function generateNotes(
 	_pluginConfig: Record<string, unknown>,
 	context: Context,
-): Promise<string | undefined> {
+): Promise<string> {
 	const { commits, lastRelease, nextRelease, options } = context;
 	const repositoryUrl = options.repositoryUrl.replace(/\.git$/i, "");
 

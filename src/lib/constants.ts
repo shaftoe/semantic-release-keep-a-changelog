@@ -16,7 +16,6 @@ export const KAC_SECTIONS = [
 	"Deprecated",
 	"Removed",
 	"Fixed",
-	"Security",
 ] as const;
 
 // Type mapping: conventional commit type → Keep a Changelog section
