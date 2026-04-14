@@ -164,44 +164,29 @@ describe("prepare", () => {
 		}
 	});
 
-	it("places link definitions at the very end of the file", async () => {
+	it("appends after [Unreleased] with newline but no following version", async () => {
 		const dir = await makeTmpDir();
 		const context = {
 			cwd: dir,
-			nextRelease: {
-				notes:
-					"## [0.1.1] - 2026-04-14\n\n### Fixed\n\n- fix bug\n\n[0.1.1]: https://github.com/acme/app/compare/v0.1.0...v0.1.1",
-			},
+			nextRelease: { notes: "## 1.0.0\n\n### Added\n- new feature" },
 			logger: { log: () => {} },
 		};
 		try {
 			await mkdir(join(dir), { recursive: true });
 			await writeFile(
 				join(dir, "CHANGELOG.md"),
-				"## [Unreleased]\n\n## [0.1.0] - 2026-04-13\n\n### Added\n\n- first release",
+				"## [Unreleased]\n\n### Changed\n- some change",
 				"utf-8",
 			);
 
 			await prepare({}, context as Parameters<typeof prepare>[1]);
 			const content = await readFile(join(dir, "CHANGELOG.md"), "utf-8");
-
-			// Link definition should be at the very end of the file
-			const linkLine =
-				"[0.1.1]: https://github.com/acme/app/compare/v0.1.0...v0.1.1";
-			const linkIdx = content.indexOf(linkLine);
-			const v010Idx = content.indexOf("## [0.1.0]");
-
-			// Link must appear AFTER all version sections
-			expect(linkIdx).toBeGreaterThan(-1);
-			expect(linkIdx).toBeGreaterThan(v010Idx);
-
-			// No version header should appear after the link
-			const afterLink = content.slice(linkIdx);
-			expect(afterLink).not.toContain("## [");
-
-			// File must end with a single newline
-			expect(content.endsWith("\n")).toBe(true);
-			expect(content.endsWith("\n\n")).toBe(false);
+			const unreleasedIdx = content.indexOf("## [Unreleased]");
+			const newReleaseIdx = content.indexOf("## 1.0.0");
+			expect(unreleasedIdx).toBeGreaterThanOrEqual(0);
+			expect(newReleaseIdx).toBeGreaterThan(unreleasedIdx);
+			expect(content).toContain("some change");
+			expect(content).toContain("new feature");
 		} finally {
 			await rm(dir, { recursive: true, force: true });
 		}
@@ -226,29 +211,143 @@ describe("prepare", () => {
 		}
 	});
 
-	it("appends after [Unreleased] with newline but no following version", async () => {
+	it("manages footer links: adds [unreleased] when [Unreleased] section exists", async () => {
 		const dir = await makeTmpDir();
-		const context = {
-			cwd: dir,
-			nextRelease: { notes: "## 1.0.0\n\n### Added\n- new feature" },
-			logger: { log: () => {} },
-		};
 		try {
 			await mkdir(join(dir), { recursive: true });
+
+			// Seed file with [Unreleased] section and first release
 			await writeFile(
 				join(dir, "CHANGELOG.md"),
-				"## [Unreleased]\n\n### Changed\n- some change",
+				"## [Unreleased]\n\n## [1.0.0] - 2024-01-01\n\n### Added\n\n- initial feature\n\n[unreleased]: https://github.com/acme/app/compare/v1.0.0...HEAD\n[1.0.0]: https://github.com/acme/app/releases/tag/v1.0.0",
 				"utf-8",
 			);
 
-			await prepare({}, context as Parameters<typeof prepare>[1]);
+			await prepare({}, {
+				cwd: dir,
+				nextRelease: {
+					notes:
+						"## [1.1.0] - 2024-02-01\n\n### Added\n\n- second feature\n\n[1.1.0]: https://github.com/acme/app/compare/v1.0.0...v1.1.0\n",
+				},
+				logger: { log: () => {} },
+			} as Parameters<typeof prepare>[1]);
+
 			const content = await readFile(join(dir, "CHANGELOG.md"), "utf-8");
-			const unreleasedIdx = content.indexOf("## [Unreleased]");
-			const newReleaseIdx = content.indexOf("## 1.0.0");
-			expect(unreleasedIdx).toBeGreaterThanOrEqual(0);
-			expect(newReleaseIdx).toBeGreaterThan(unreleasedIdx);
-			expect(content).toContain("some change");
-			expect(content).toContain("new feature");
+
+			// Footer should have [unreleased] pointing to v1.1.0...HEAD (updated)
+			expect(content).toContain(
+				"[unreleased]: https://github.com/acme/app/compare/v1.1.0...HEAD",
+			);
+			expect(content).toContain(
+				"[1.1.0]: https://github.com/acme/app/compare/v1.0.0...v1.1.0",
+			);
+
+			// [unreleased] should appear before the release links
+			const unreleasedLinkIdx = content.indexOf("[unreleased]:");
+			const v110LinkIdx = content.indexOf("[1.1.0]:");
+			expect(unreleasedLinkIdx).toBeLessThan(v110LinkIdx);
+
+			// Old [unreleased] URL should be gone
+			expect(content).not.toContain(
+				"[unreleased]: https://github.com/acme/app/compare/v1.0.0...HEAD",
+			);
+
+			// No version header should appear after the link footer
+			const afterFirstLink = content.slice(content.indexOf("[unreleased]:"));
+			expect(afterFirstLink).not.toContain("## [");
+
+			// File ends with single newline
+			expect(content.endsWith("\n")).toBe(true);
+			expect(content.endsWith("\n\n")).toBe(false);
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
+	});
+
+	it("manages footer links: updates [unreleased] on third release", async () => {
+		const dir = await makeTmpDir();
+		try {
+			await mkdir(join(dir), { recursive: true });
+
+			// Seed file with existing releases and links
+			await writeFile(
+				join(dir, "CHANGELOG.md"),
+				"## [1.1.0] - 2024-02-01\n\n### Added\n\n- second feature\n\n## [1.0.0] - 2024-01-01\n\n### Added\n\n- initial feature\n\n[unreleased]: https://github.com/acme/app/compare/v1.1.0...HEAD\n[1.1.0]: https://github.com/acme/app/compare/v1.0.0...v1.1.0\n[1.0.0]: https://github.com/acme/app/releases/tag/v1.0.0",
+				"utf-8",
+			);
+
+			await prepare({}, {
+				cwd: dir,
+				nextRelease: {
+					notes:
+						"## [2.0.0] - 2024-03-01\n\n### Removed\n\n- old api\n\n[2.0.0]: https://github.com/acme/app/compare/v1.1.0...v2.0.0\n",
+				},
+				logger: { log: () => {} },
+			} as Parameters<typeof prepare>[1]);
+
+			const content = await readFile(join(dir, "CHANGELOG.md"), "utf-8");
+
+			// [unreleased] should now point to v2.0.0...HEAD
+			expect(content).toContain(
+				"[unreleased]: https://github.com/acme/app/compare/v2.0.0...HEAD",
+			);
+			// Old [unreleased] link should be gone
+			expect(content).not.toContain(
+				"[unreleased]: https://github.com/acme/app/compare/v1.1.0...HEAD",
+			);
+
+			// Footer links in order: unreleased, 2.0.0, 1.1.0, 1.0.0
+			const lines = content.split("\n");
+			const footerStart = lines.findIndex((l) => l.startsWith("[unreleased]:"));
+			expect(lines[footerStart]).toBe(
+				"[unreleased]: https://github.com/acme/app/compare/v2.0.0...HEAD",
+			);
+			expect(lines[footerStart + 1]).toBe(
+				"[2.0.0]: https://github.com/acme/app/compare/v1.1.0...v2.0.0",
+			);
+			expect(lines[footerStart + 2]).toBe(
+				"[1.1.0]: https://github.com/acme/app/compare/v1.0.0...v1.1.0",
+			);
+			expect(lines[footerStart + 3]).toBe(
+				"[1.0.0]: https://github.com/acme/app/releases/tag/v1.0.0",
+			);
+
+			// No extra links after footer
+			expect(lines[footerStart + 4]).toBe("");
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
+	});
+
+	it("preserves existing links when new release has no compare link", async () => {
+		const dir = await makeTmpDir();
+		try {
+			await mkdir(join(dir), { recursive: true });
+
+			// Seed with existing links
+			await writeFile(
+				join(dir, "CHANGELOG.md"),
+				"## [1.0.0] - 2024-01-01\n\n### Added\n\n- initial feature\n\n[1.0.0]: https://github.com/acme/app/releases/tag/v1.0.0",
+				"utf-8",
+			);
+
+			await prepare({}, {
+				cwd: dir,
+				nextRelease: {
+					notes: "## [1.1.0] - 2024-02-01\n\n### Added\n\n- new feature\n",
+				},
+				logger: { log: () => {} },
+			} as Parameters<typeof prepare>[1]);
+
+			const content = await readFile(join(dir, "CHANGELOG.md"), "utf-8");
+
+			// No compare link in notes → no [unreleased] link generated
+			expect(content).not.toContain("[unreleased]:");
+
+			// Existing link should be preserved
+			expect(content).toContain(
+				"[1.0.0]: https://github.com/acme/app/releases/tag/v1.0.0",
+			);
 		} finally {
 			await rm(dir, { recursive: true, force: true });
 		}
