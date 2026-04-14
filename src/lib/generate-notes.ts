@@ -74,9 +74,13 @@ export async function generateNotes(
 	const { issue, commit, referenceActions, issuePrefixes } = GITHUB_CONFIG;
 
 	// Parse commits using conventional-commits-parser
+	// Default headerPattern doesn't handle the `!` breaking change suffix (e.g. `feat!: ...`),
+	// which causes the parser to produce type=undefined for such commits.
 	const parser = new CommitParser({
 		referenceActions,
 		issuePrefixes,
+		headerPattern: /^(\w*)(?:\(([\w$.* -]*)\))?!?: (.*)$/,
+		headerCorrespondence: ["type", "scope", "subject"],
 	});
 
 	const parsedCommits = filterRevertedCommitsSync(

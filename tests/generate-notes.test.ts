@@ -154,6 +154,104 @@ describe("generateNotes", () => {
 		expect(result).not.toContain("compare/");
 	});
 
+	it("handles feat! breaking change syntax", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "feat!: breaking feature",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Added");
+		expect(result).toContain("breaking feature");
+	});
+
+	it("handles fix! breaking change syntax", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "fix!: breaking fix",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Fixed");
+		expect(result).toContain("breaking fix");
+	});
+
+	it("handles scoped breaking change feat(scope)!:", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "feat(api)!: redesign API",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Added");
+		expect(result).toContain("**api**");
+		expect(result).toContain("redesign API");
+	});
+
+	it("handles BREAKING CHANGE footer", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "feat: new feature\n\nBREAKING CHANGE: old API removed",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Added");
+		expect(result).toContain("new feature");
+	});
+
+	it("handles feat! with BREAKING CHANGE footer", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message:
+						"feat(api)!: redesign API\n\nBREAKING CHANGE: the old API is gone",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Added");
+		expect(result).toContain("**api**");
+		expect(result).toContain("redesign API");
+	});
+
 	it("produces version header even with no commits", async () => {
 		const context = makeContext({
 			commits: [],
