@@ -1,4 +1,3 @@
-import { format } from "node:url";
 import { writeChangelogStream } from "conventional-changelog-writer";
 import { filterRevertedCommitsSync } from "conventional-commits-filter";
 import { CommitParser } from "conventional-commits-parser";
@@ -93,7 +92,7 @@ export async function generateNotes(
 
 	const changelogContext: Record<string, unknown> = {
 		version: nextRelease.version,
-		host: format({ protocol, hostname, port }),
+		host: `${protocol}://${hostname}${port ? `:${port}` : ''}`,
 		owner,
 		repository,
 		previousTag,
