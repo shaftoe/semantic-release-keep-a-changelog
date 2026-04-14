@@ -164,6 +164,68 @@ describe("prepare", () => {
 		}
 	});
 
+	it("places link definitions at the very end of the file", async () => {
+		const dir = await makeTmpDir();
+		const context = {
+			cwd: dir,
+			nextRelease: {
+				notes:
+					"## [0.1.1] - 2026-04-14\n\n### Fixed\n\n- fix bug\n\n[0.1.1]: https://github.com/acme/app/compare/v0.1.0...v0.1.1",
+			},
+			logger: { log: () => {} },
+		};
+		try {
+			await mkdir(join(dir), { recursive: true });
+			await writeFile(
+				join(dir, "CHANGELOG.md"),
+				"## [Unreleased]\n\n## [0.1.0] - 2026-04-13\n\n### Added\n\n- first release",
+				"utf-8",
+			);
+
+			await prepare({}, context as Parameters<typeof prepare>[1]);
+			const content = await readFile(join(dir, "CHANGELOG.md"), "utf-8");
+
+			// Link definition should be at the very end of the file
+			const linkLine =
+				"[0.1.1]: https://github.com/acme/app/compare/v0.1.0...v0.1.1";
+			const linkIdx = content.indexOf(linkLine);
+			const v010Idx = content.indexOf("## [0.1.0]");
+
+			// Link must appear AFTER all version sections
+			expect(linkIdx).toBeGreaterThan(-1);
+			expect(linkIdx).toBeGreaterThan(v010Idx);
+
+			// No version header should appear after the link
+			const afterLink = content.slice(linkIdx);
+			expect(afterLink).not.toContain("## [");
+
+			// File must end with a single newline
+			expect(content.endsWith("\n")).toBe(true);
+			expect(content.endsWith("\n\n")).toBe(false);
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
+	});
+
+	it("ends file with single newline", async () => {
+		const dir = await makeTmpDir();
+		const context = {
+			cwd: dir,
+			nextRelease: {
+				notes: "## 1.0.0\n\n### Added\n- new feature",
+			},
+			logger: { log: () => {} },
+		};
+		try {
+			await prepare({}, context as Parameters<typeof prepare>[1]);
+			const content = await readFile(join(dir, "CHANGELOG.md"), "utf-8");
+			expect(content.endsWith("\n")).toBe(true);
+			expect(content.endsWith("\n\n")).toBe(false);
+		} finally {
+			await rm(dir, { recursive: true, force: true });
+		}
+	});
+
 	it("appends after [Unreleased] with newline but no following version", async () => {
 		const dir = await makeTmpDir();
 		const context = {
