@@ -9,7 +9,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { prepare } from "../src/lib/prepare.js";
+import { insertReleaseNotes, prepare } from "../src/lib/prepare.js";
 
 async function makeTmpDir(): Promise<string> {
 	return mkdtemp(join(tmpdir(), "kac-test-"));
@@ -30,6 +30,79 @@ async function makeContext(overrides: Record<string, unknown> = {}) {
 		} as Parameters<typeof prepare>[1],
 	};
 }
+
+describe("insertReleaseNotes", () => {
+	it("prepends at top when no [Unreleased] section", () => {
+		const result = insertReleaseNotes(
+			"## [0.9.0]\n\n### Fixed\n- bug fix",
+			"## [1.0.0]\n\n### Added\n- new feature",
+		);
+		expect(result).toContain("## [1.0.0]");
+		expect(result).toContain("## [0.9.0]");
+		const newIdx = result.indexOf("## [1.0.0]");
+		const oldIdx = result.indexOf("## [0.9.0]");
+		expect(newIdx).toBeLessThan(oldIdx);
+	});
+
+	it("inserts after [Unreleased] with no content and no following version", () => {
+		const result = insertReleaseNotes(
+			"## [Unreleased]",
+			"## [1.0.0]\n\n### Added\n- feature",
+		);
+		const unreleasedIdx = result.indexOf("## [Unreleased]");
+		const newIdx = result.indexOf("## [1.0.0]");
+		expect(unreleasedIdx).toBeGreaterThanOrEqual(0);
+		expect(newIdx).toBeGreaterThan(unreleasedIdx);
+	});
+
+	it("inserts after [Unreleased] with content but no following version", () => {
+		const result = insertReleaseNotes(
+			"## [Unreleased]\n\n### Changed\n- some change",
+			"## [1.0.0]\n\n### Added\n- feature",
+		);
+		const unreleasedIdx = result.indexOf("## [Unreleased]");
+		const newIdx = result.indexOf("## [1.0.0]");
+		expect(unreleasedIdx).toBeGreaterThanOrEqual(0);
+		expect(newIdx).toBeGreaterThan(unreleasedIdx);
+		expect(result).toContain("some change");
+		expect(result).toContain("feature");
+	});
+
+	it("inserts between [Unreleased] and existing version", () => {
+		const result = insertReleaseNotes(
+			"## [Unreleased]\n\n### Changed\n- wip\n\n## [0.9.0]\n\n### Fixed\n- bug",
+			"## [1.0.0]\n\n### Added\n- feature",
+		);
+		const unreleasedIdx = result.indexOf("## [Unreleased]");
+		const newIdx = result.indexOf("## [1.0.0]");
+		const oldIdx = result.indexOf("## [0.9.0]");
+		expect(unreleasedIdx).toBeGreaterThanOrEqual(0);
+		expect(newIdx).toBeGreaterThan(unreleasedIdx);
+		expect(oldIdx).toBeGreaterThan(newIdx);
+		expect(result).toContain("wip");
+		expect(result).toContain("feature");
+		expect(result).toContain("bug");
+	});
+
+	it("handles [Unreleased] with content before first existing version", () => {
+		const result = insertReleaseNotes(
+			"## [Unreleased]\n\n### Added\n\n- upcoming feature",
+			"## [1.0.0]\n\n### Fixed\n- patch",
+		);
+		const unreleasedIdx = result.indexOf("## [Unreleased]");
+		const newIdx = result.indexOf("## [1.0.0]");
+		expect(unreleasedIdx).toBeGreaterThanOrEqual(0);
+		expect(newIdx).toBeGreaterThan(unreleasedIdx);
+		expect(result).toContain("upcoming feature");
+		expect(result).toContain("patch");
+	});
+
+	it("returns notes only when file body is empty", () => {
+		const result = insertReleaseNotes("", "## [1.0.0]\n\n### Added\n- feature");
+		expect(result).toContain("## [1.0.0]");
+		expect(result).toContain("feature");
+	});
+});
 
 describe("prepare", () => {
 	it("creates a new changelog file when none exists", async () => {

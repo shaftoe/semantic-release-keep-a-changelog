@@ -128,6 +128,46 @@ function buildFooter(newLinks: LinkDef[], existingLinks: LinkDef[]): LinkDef[] {
 }
 
 /**
+ * Insert new release notes into the existing changelog body.
+ *
+ * If an [Unreleased] section exists, inserts the new release AFTER it
+ * and BEFORE the previous release. Otherwise, prepends at the top.
+ */
+export function insertReleaseNotes(
+	fileBody: string,
+	notesBody: string,
+): string {
+	const unreleasedPos = findVersionHeader(fileBody, "Unreleased");
+
+	if (unreleasedPos !== -1) {
+		// Find the next version header after [Unreleased]
+		const afterUnreleased = fileBody.slice(unreleasedPos);
+		const firstNewline = afterUnreleased.indexOf("\n");
+		if (firstNewline === -1) {
+			// Unreleased is the only version, append at end
+			return `${fileBody}\n\n${notesBody}\n`;
+		}
+
+		const afterFirstLine = afterUnreleased.slice(firstNewline);
+		const nextVersionMatch = afterFirstLine.match(/^##\s*\[/m);
+
+		if (nextVersionMatch) {
+			// Insert between [Unreleased] and the next version
+			const insertPos =
+				unreleasedPos + firstNewline + (nextVersionMatch.index ?? 0);
+			const betweenSections = fileBody.slice(unreleasedPos, insertPos);
+			const cleanBetween = betweenSections.replace(/\n+$/, "");
+			return `${cleanBetween}\n\n${notesBody}\n\n${fileBody.slice(insertPos)}`;
+		}
+		// No next version after [Unreleased], append at end
+		return `${fileBody}\n\n${notesBody}\n`;
+	}
+
+	// No [Unreleased] section, prepend at top
+	return `${notesBody}\n${fileBody ? `\n${fileBody}\n` : ""}`;
+}
+
+/**
  * Merge generated release notes into the existing CHANGELOG.md.
  *
  * If an [Unreleased] section exists, inserts the new release notes
@@ -174,36 +214,7 @@ export async function prepare(
 		const { body: fileBody, links: existingLinks } =
 			extractFooterLinks(currentContent);
 
-		let content: string;
-
-		// Check if there's an [Unreleased] section
-		const unreleasedPos = findVersionHeader(fileBody, "Unreleased");
-
-		if (unreleasedPos !== -1) {
-			// Find the next section after [Unreleased]
-			const afterUnreleased = fileBody.slice(unreleasedPos);
-			const firstNewline = afterUnreleased.indexOf("\n");
-			if (firstNewline === -1) {
-				// Unreleased is the only version, append at end
-				content = `${fileBody}\n\n${notesBody}\n`;
-			} else {
-				const afterFirstLine = afterUnreleased.slice(firstNewline);
-				const nextVersionMatch = afterFirstLine.match(/^##\s*\[/m);
-
-				if (nextVersionMatch) {
-					const insertPos =
-						unreleasedPos + firstNewline + (nextVersionMatch.index ?? 0);
-					const betweenSection = fileBody.slice(unreleasedPos, insertPos);
-					const cleanBetween = betweenSection.replace(/\n+$/, "");
-					content = `${cleanBetween}\n\n${notesBody}\n\n${fileBody.slice(insertPos)}`;
-				} else {
-					content = `${fileBody}\n\n${notesBody}\n`;
-				}
-			}
-		} else {
-			// No [Unreleased] section, prepend at top
-			content = `${notesBody}\n${fileBody ? `\n${fileBody}\n` : ""}`;
-		}
+		let content = insertReleaseNotes(fileBody, notesBody);
 
 		// Build the managed footer and append it
 		content = content.trimEnd();

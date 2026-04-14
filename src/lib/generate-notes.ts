@@ -56,20 +56,20 @@ export async function generateNotes(
 	const repositoryUrl = options.repositoryUrl.replace(/\.git$/i, "");
 
 	// Parse repository URL to extract owner and repository
-	const [match, auth, host, urlPath] =
-		/^(?!.+:\/\/)(?:(?<auth>.*)@)?(?<host>.*?):(?<path>.*)$/.exec(
-			repositoryUrl,
-		) || [];
+	// SSH URLs like `git@github.com:owner/repo.git` need rewriting to a
+	// URL-parseable form; HTTPS URLs are parsed as-is.
+	const sshMatch = /^(?!.+:\/\/)(?:([^@]+)@)?([^:]+):(.+)$/.exec(repositoryUrl);
 
-	let { hostname, port, pathname, protocol } = new URL(
-		match ? `ssh://${auth ? `${auth}@` : ""}${host}/${urlPath}` : repositoryUrl,
+	const url = new URL(
+		sshMatch
+			? `ssh://${sshMatch[1] ? `${sshMatch[1]}@` : ""}${sshMatch[2]}/${sshMatch[3]}`
+			: repositoryUrl,
 	);
+	const { hostname, pathname } = url;
+	const port = url.protocol.includes("ssh") ? "" : url.port;
+	const protocol = url.protocol === "http:" ? "http" : "https";
 
-	port = protocol.includes("ssh") ? "" : port;
-	protocol = protocol && /http[^s]/.test(protocol) ? "http" : "https";
-
-	const [, owner, repository] =
-		/^\/(?<owner>[^/]+)?\/?(?<repository>.+)?$/.exec(pathname) || [];
+	const [, owner, repository] = /^\/([^/]+)\/?(.+)?$/.exec(pathname) || [];
 
 	const { issue, commit, referenceActions, issuePrefixes } = GITHUB_CONFIG;
 
