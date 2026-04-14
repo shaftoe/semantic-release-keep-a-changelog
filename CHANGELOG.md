@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-04-14
+
+### Added
+
+- remove optional config
+
+### Changed
+
+- cleanup URL parsing, extract insertReleaseNotes
+
+### Fixed
+
+- ensure breaking changes are handled correctly
+
 ## [0.1.4] - 2026-04-14
 
 ### Changed
@@ -44,7 +58,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[unreleased]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.1.4...HEAD
+[unreleased]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.1.4...v0.2.0
 [0.1.4]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.1.3...v0.1.4
 [0.1.3]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.1.2...v0.1.3
 [0.1.2]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.1.1...v0.1.2
