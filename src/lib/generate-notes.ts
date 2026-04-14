@@ -3,6 +3,7 @@ import { filterRevertedCommitsSync } from "conventional-commits-filter";
 import { CommitParser } from "conventional-commits-parser";
 import getStream from "get-stream";
 import intoStream from "into-stream";
+import { Temporal } from "temporal-polyfill";
 import { writerOpts } from "./keep-a-changelog.js";
 
 /**
@@ -92,6 +93,7 @@ export async function generateNotes(
 
 	const changelogContext: Record<string, unknown> = {
 		version: nextRelease.version,
+		date: Temporal.Now.plainDateISO().toString(),
 		host: `${protocol}://${hostname}${port ? `:${port}` : ""}`,
 		owner,
 		repository,

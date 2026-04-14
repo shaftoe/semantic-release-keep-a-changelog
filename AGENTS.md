@@ -4,11 +4,11 @@ This file contains important rules and guidelines for AI agents working on this 
 
 ## Code Quality and Testing Requirements
 
-### Use bun as package manager and test suite
 
-Never use `npm` unless strictly necessary
+- Use bun as package manager and test suite. Never use `npm` unless strictly necessary
+- Don't use `Date()` APIs, only Temporal use with polyfill is allowed
 
-### Rule: Always Run Tests and Checks Before Completing Changes
+## Rule: Always Run Tests and Checks Before Completing Changes
 
 Before considering any change complete, **you MUST** run both of the following commands:
 
