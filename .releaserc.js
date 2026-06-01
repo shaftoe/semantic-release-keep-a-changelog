@@ -13,7 +13,12 @@
 export default {
 	branches: ["master"],
 	plugins: [
-		"@semantic-release/commit-analyzer",
+		[
+			"@semantic-release/commit-analyzer",
+			{
+				releaseRules: [{ type: "chore", scope: "deps", release: "minor" }],
+			},
+		],
 		"./dist/index.js",
 		[
 			"@semantic-release/npm",
