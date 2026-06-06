@@ -16,7 +16,7 @@ export default {
 		[
 			"@semantic-release/commit-analyzer",
 			{
-				releaseRules: [{ type: "chore", scope: "deps", release: "minor" }],
+				releaseRules: [{ type: "chore", scope: "deps", release: "patch" }],
 			},
 		],
 		"./dist/index.js",
