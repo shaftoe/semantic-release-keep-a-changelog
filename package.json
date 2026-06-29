@@ -44,7 +44,7 @@
 		"@semantic-release/error": "^4.0.0",
 		"conventional-changelog-writer": "8.4.0",
 		"conventional-commits-filter": "^5.0.0",
-		"conventional-commits-parser": "6.4.0",
+		"conventional-commits-parser": "7.0.0",
 		"get-stream": "9.0.1",
 		"into-stream": "^9.1.0",
 		"temporal-polyfill": "^1.0.1"
