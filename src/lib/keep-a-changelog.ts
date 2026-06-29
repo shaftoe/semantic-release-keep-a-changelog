@@ -9,12 +9,36 @@ import { KAC_SECTIONS, OMITTED_TYPES, TYPE_TO_SECTION } from "./constants.js";
  * - groupBy: groups by the mapped section name
  * - commitGroupsSort: sorts sections in KaC order
  * - commitsSort: sorts commits within a section by subject
- * - mainTemplate / headerPartial / commitPartial: Handlebars templates
+ * - template / headerPartial / commitPartial / footerPartial: render functions
+ *   (conventional-changelog-writer v9 replaced Handlebars templates with
+ *   render functions)
  */
 
+/** Minimal commit shape used by the render functions. */
+interface RenderCommit {
+	scope?: string;
+	subject?: string;
+}
+
+/** Commit group with title and commits. */
 export interface CommitGroup {
 	title: string;
-	commits: unknown[];
+	commits: RenderCommit[];
+}
+
+/** Template context passed to render functions by the writer. */
+interface RenderContext {
+	version?: string;
+	date?: string;
+	commitGroups?: CommitGroup[];
+	linkCompare?: boolean;
+	host?: string;
+	owner?: string;
+	repository?: string;
+	previousTag?: string | null;
+	currentTag?: string | null;
+	headerPartial: (ctx: RenderContext) => string;
+	commitPartial: (ctx: RenderContext, commit: RenderCommit) => string;
 }
 
 export interface TransformedCommit {
@@ -54,7 +78,7 @@ const sectionOrder: Map<string, number> = new Map(
 );
 
 export const writerOpts = {
-	transform: (commit: TransformedCommit): TransformedCommit | null => {
+	transform: (commit: TransformedCommit): Partial<TransformedCommit> | null => {
 		// Map the commit type to a Keep a Changelog section
 		let section = TYPE_TO_SECTION[commit.type];
 
@@ -72,9 +96,8 @@ export const writerOpts = {
 			return null;
 		}
 
-		// Limit hash to 7 characters — return a new object since writer v8 freezes input
+		// Return patch — writer v9 merges the diff into the original commit
 		return {
-			...commit,
 			hash: commit.hash ? commit.hash.substring(0, 7) : commit.hash,
 			section,
 		};
@@ -86,8 +109,47 @@ export const writerOpts = {
 		return aOrder - bOrder;
 	},
 	commitsSort: ["subject"],
-	mainTemplate: `{{> header}}\n\n{{#each commitGroups~}}{{#if title}}\n### {{title}}\n\n{{/if}}{{#each commits}}{{> commit root=@root}}{{/each}}{{/each~}}{{#if @root.linkCompare}}\n[{{@root.version}}]: {{@root.host}}/{{@root.owner}}/{{@root.repository}}/compare/{{@root.previousTag}}...{{@root.currentTag}}{{/if}}`,
-	headerPartial: `## [{{version}}]{{#if date}} - {{date}}{{/if}}`,
-	commitPartial: `-{{#if scope}} **{{scope}}**:{{/if}} {{subject}}\n`,
-	footerPartial: "",
+
+	/** Renders the release header: `## [version] - date` */
+	headerPartial: (ctx: RenderContext): string =>
+		`## [${ctx.version}]${ctx.date ? ` - ${ctx.date}` : ""}`,
+
+	/** Renders introductory text after the header (unused for KaC). */
+	preamblePartial: (): string => "",
+
+	/** Renders a single commit line: `- **scope**: subject` or `- subject`. */
+	commitPartial: (_ctx: RenderContext, commit: RenderCommit): string =>
+		`-${commit.scope ? ` **${commit.scope}**:` : ""} ${commit.subject}`,
+
+	/** Renders release footer notes (unused for KaC). */
+	footerPartial: (): string => "",
+
+	/**
+	 * Renders the full changelog entry: header, commit groups (with
+	 * `### Section` headers), and an optional compare link.
+	 */
+	template: (ctx: RenderContext): string => {
+		const blocks: string[] = [ctx.headerPartial(ctx)];
+
+		for (const group of ctx.commitGroups ?? []) {
+			const parts: string[] = [];
+			if (group.title) {
+				parts.push(`### ${group.title}`);
+			}
+			parts.push(
+				group.commits
+					.map((commit) => ctx.commitPartial(ctx, commit))
+					.join("\n"),
+			);
+			blocks.push(parts.join("\n\n"));
+		}
+
+		if (ctx.linkCompare) {
+			blocks.push(
+				`[${ctx.version}]: ${ctx.host}/${ctx.owner}/${ctx.repository}/compare/${ctx.previousTag}...${ctx.currentTag}`,
+			);
+		}
+
+		return blocks.join("\n\n");
+	},
 };
