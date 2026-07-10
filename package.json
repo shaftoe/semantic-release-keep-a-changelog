@@ -42,9 +42,9 @@
 	},
 	"dependencies": {
 		"@semantic-release/error": "^4.0.0",
-		"conventional-changelog-writer": "^9.1.1",
+		"conventional-changelog-writer": "^9.2.0",
 		"conventional-commits-filter": "^6.0.1",
-		"conventional-commits-parser": "^7.0.1",
+		"conventional-commits-parser": "^7.1.0",
 		"get-stream": "9.0.1",
 		"into-stream": "^9.1.0",
 		"temporal-polyfill": "^1.0.1"
