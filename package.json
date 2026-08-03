@@ -47,7 +47,7 @@
 		"conventional-commits-parser": "^7.1.2",
 		"get-stream": "9.0.1",
 		"into-stream": "^9.1.0",
-		"temporal-polyfill": "^1.0.2"
+		"temporal-polyfill": "^1.0.3"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.6",
@@ -60,7 +60,7 @@
 		"@types/node": "^26.1.2",
 		"markdownlint": "^0.41.1",
 		"semantic-release": "^25.0.8",
-		"tsx": "^4.23.1",
+		"tsx": "^4.23.5",
 		"typescript": "^7.0.2"
 	},
 	"peerDependencies": {
