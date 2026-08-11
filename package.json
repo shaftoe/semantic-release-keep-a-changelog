@@ -42,7 +42,7 @@
 	},
 	"dependencies": {
 		"@semantic-release/error": "^4.0.0",
-		"conventional-changelog-writer": "^9.2.0",
+		"conventional-changelog-writer": "^9.2.1",
 		"conventional-commits-filter": "^6.0.1",
 		"conventional-commits-parser": "^7.1.2",
 		"get-stream": "9.0.1",
@@ -60,7 +60,7 @@
 		"@types/node": "^26.2.0",
 		"markdownlint": "^0.41.1",
 		"semantic-release": "^25.0.9",
-		"tsx": "^4.23.11",
+		"tsx": "^4.23.12",
 		"typescript": "^7.0.2"
 	},
 	"peerDependencies": {
