@@ -47,7 +47,7 @@
 		"conventional-commits-parser": "^7.1.2",
 		"get-stream": "9.0.1",
 		"into-stream": "^9.1.0",
-		"temporal-polyfill": "^1.0.3"
+		"temporal-polyfill": "^1.0.4"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "^2.5.8",
