@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.13] - 2026-08-22
+
+### Changed
+
+- **deps-dev**: update dependencies (#56)
+- **deps**: update dependencies (#57)
+
 ## [0.4.12] - 2026-08-14
 
 ### Changed
@@ -188,7 +195,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[unreleased]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.4.12...HEAD
+[unreleased]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.4.13...HEAD
+[0.4.13]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.4.12...v0.4.13
 [0.4.12]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.4.11...v0.4.12
 [0.4.11]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.4.10...v0.4.11
 [0.4.10]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.4.9...v0.4.10
