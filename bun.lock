@@ -24,7 +24,7 @@
         "@types/node": "^26.4.0",
         "markdownlint": "^0.41.1",
         "semantic-release": "^25.0.9",
-        "tsx": "^4.23.12",
+        "tsx": "^4.23.13",
         "typescript": "^7.0.2",
       },
       "peerDependencies": {
@@ -699,7 +699,7 @@
 
     "traverse": ["traverse@0.6.8", "", {}, "sha512-aXJDbk6SnumuaZSANd21XAo15ucCDE38H4fkqiGsc3MhCK+wOlZvLP9cB/TvpHT0mOyWgC4Z8EwRlzqYSUzdsA=="],
 
-    "tsx": ["tsx@4.23.12", "", { "dependencies": { "esbuild": "~0.28.0" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "bin": { "tsx": "dist/cli.mjs" } }, "sha512-FDf4L4sYzKtzWYhU/Xm0AQFdTjdIxNo9ElTf2mxXM6k8YMHXzYUe4yODVaXP4V9uMFbVg8c0qyBccK2OOxb45Q=="],
+    "tsx": ["tsx@4.23.13", "", { "dependencies": { "esbuild": "~0.28.0" }, "optionalDependencies": { "fsevents": "~2.3.3" }, "bin": { "tsx": "dist/cli.mjs" } }, "sha512-BL5MGkRln6aDYhb0xbQlEAGw743BaZYWdbWtdJOBriYJboKgUUYCadFp2/FpBBZquBC/ezNBn7wMMPx7FDZUDw=="],
 
     "tunnel": ["tunnel@0.0.6", "", {}, "sha512-1h/Lnq9yajKY2PEbBadPXj3VxsDDu844OnaAo52UVmIzIvwwtBPIuNvkjuzBlTWpfJyUbG3ez0KSBibQkj4ojg=="],
 

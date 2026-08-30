@@ -60,7 +60,7 @@
 		"@types/node": "^26.4.0",
 		"markdownlint": "^0.41.1",
 		"semantic-release": "^25.0.9",
-		"tsx": "^4.23.12",
+		"tsx": "^4.23.13",
 		"typescript": "^7.0.2"
 	},
 	"peerDependencies": {
