@@ -1,4 +1,3 @@
-import { describe, expect, it } from "bun:test";
 import {
 	access,
 	mkdir,
@@ -9,6 +8,7 @@ import {
 } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 import { insertReleaseNotes, prepare } from "../src/lib/prepare.js";
 
 async function makeTmpDir(): Promise<string> {

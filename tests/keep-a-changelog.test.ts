@@ -1,4 +1,4 @@
-import { describe, expect, it } from "bun:test";
+import { describe, expect, it } from "vitest";
 import type { TransformedCommit } from "../src/lib/keep-a-changelog.js";
 import { writerOpts } from "../src/lib/keep-a-changelog.js";
 

@@ -29,7 +29,7 @@ export default {
 		[
 			"@semantic-release/exec",
 			{
-				prepareCmd: "bun run format",
+				prepareCmd: "pnpm run format",
 			},
 		],
 		[

@@ -1,7 +1,7 @@
-import { describe, expect, it } from "bun:test";
 import { copyFile, mkdtemp, readFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { describe, expect, it } from "vitest";
 import { generateNotes } from "../src/lib/generate-notes.js";
 import { prepare } from "../src/lib/prepare.js";
 import { expectValidMarkdown } from "./helpers/lint-markdown.js";
