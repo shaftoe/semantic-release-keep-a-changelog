@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-10-13
+
+### Added
+
+- **deps**: update dependency semantic-release to v25 (#81)
+
+### Changed
+
+- **deps-dev**: update npm dev dependencies (#74)
+
 ## [0.5.1] - 2026-10-11
 
 ### Changed
@@ -232,7 +242,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[unreleased]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.5.1...HEAD
+[unreleased]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.5.0...v0.5.1
 [0.5.0]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.4.14...v0.5.0
 [0.4.14]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.4.13...v0.4.14
