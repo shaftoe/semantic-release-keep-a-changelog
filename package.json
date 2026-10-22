@@ -54,7 +54,7 @@
 		"temporal-polyfill": "^1.0.5"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.5.15",
+		"@biomejs/biome": "^2.6.2",
 		"@semantic-release/commit-analyzer": "13.0.1",
 		"@semantic-release/exec": "7.1.0",
 		"@semantic-release/git": "^11.0.1",
@@ -62,7 +62,7 @@
 		"@semantic-release/npm": "^13.2.0",
 		"@types/node": "^26.6.5",
 		"@vitest/coverage-v8": "^4.1.11",
-		"markdownlint": "^0.41.1",
+		"markdownlint": "^0.42.0",
 		"semantic-release": "^25.0.9",
 		"tsx": "^4.23.15",
 		"typescript": "^7.0.2",
