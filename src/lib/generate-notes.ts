@@ -74,12 +74,15 @@ export async function generateNotes(
 	const { issue, commit, referenceActions, issuePrefixes } = GITHUB_CONFIG;
 
 	// Parse commits using conventional-commits-parser
-	// Default headerPattern doesn't handle the `!` breaking change suffix (e.g. `feat!: ...`),
-	// which causes the parser to produce type=undefined for such commits.
+	// The default headerPattern doesn't handle the `!` breaking-change suffix
+	// (e.g. `feat!: ...`), so a custom pattern is used. The scope character
+	// class matches the upstream default (including `@` and `/` so scopes like
+	// `api/v2` or `@acme/core` are parsed) and adds an optional `!` before the
+	// colon.
 	const parser = new CommitParser({
 		referenceActions,
 		issuePrefixes,
-		headerPattern: /^(\w*)(?:\(([\w$.* -]*)\))?!?: (.*)$/,
+		headerPattern: /^(\w*)(?:\(([\w$@.\-*/ ]*)\))?!?: (.*)$/,
 		headerCorrespondence: ["type", "scope", "subject"],
 	});
 

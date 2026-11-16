@@ -111,11 +111,107 @@ describe("writerOpts.transform", () => {
 		expect(result).toBeNull();
 	});
 
-	it("omits chore without deps scope", () => {
+	it("maps chore without deps scope to null (omitted)", () => {
 		const result = writerOpts.transform(
 			makeCommit({ type: "chore", scope: "linting" }),
 		);
 		expect(result).toBeNull();
+	});
+
+	it("maps uppercase FEAT type to Added (case-insensitive)", () => {
+		const result = writerOpts.transform(makeCommit({ type: "FEAT" }));
+		expect(result).not.toBeNull();
+		expect(result?.section).toBe("Added");
+	});
+
+	it("maps mixed-case Fix type to Fixed (case-insensitive)", () => {
+		const result = writerOpts.transform(makeCommit({ type: "Fix" }));
+		expect(result).not.toBeNull();
+		expect(result?.section).toBe("Fixed");
+	});
+
+	it("maps uppercase CHORE(deps) to Changed (case-insensitive)", () => {
+		const result = writerOpts.transform(
+			makeCommit({ type: "CHORE", scope: "deps" }),
+		);
+		expect(result).not.toBeNull();
+		expect(result?.section).toBe("Changed");
+	});
+
+	it("keeps build commit with BREAKING CHANGE note under Changed", () => {
+		const result = writerOpts.transform(
+			makeCommit({
+				type: "build",
+				header: "build: require Node 20",
+				notes: [
+					{ title: "BREAKING CHANGE", text: "Node 18 is no longer supported" },
+				],
+				raw: {
+					...makeCommit().raw,
+					notes: [
+						{
+							title: "BREAKING CHANGE",
+							text: "Node 18 is no longer supported",
+						},
+					],
+				},
+			}),
+		);
+		expect(result).not.toBeNull();
+		expect(result?.section).toBe("Changed");
+	});
+
+	it("keeps build commit with ! header notation under Changed", () => {
+		const result = writerOpts.transform(
+			makeCommit({
+				type: "build",
+				header: "build!: drop Node 18 support",
+				subject: "drop Node 18 support",
+			}),
+		);
+		expect(result).not.toBeNull();
+		expect(result?.section).toBe("Changed");
+	});
+
+	it("keeps ci commit with BREAKING-CHANGE note under Changed", () => {
+		const result = writerOpts.transform(
+			makeCommit({
+				type: "ci",
+				header: "ci!: change deployment pipeline",
+				subject: "change deployment pipeline",
+				notes: [{ title: "BREAKING-CHANGE", text: "pipeline renamed" }],
+				raw: {
+					...makeCommit().raw,
+					notes: [{ title: "BREAKING-CHANGE", text: "pipeline renamed" }],
+				},
+			}),
+		);
+		expect(result).not.toBeNull();
+		expect(result?.section).toBe("Changed");
+	});
+
+	it("still omits non-breaking build commit", () => {
+		const result = writerOpts.transform(
+			makeCommit({ type: "build", header: "build: bump webpack" }),
+		);
+		expect(result).toBeNull();
+	});
+
+	it("maps breaking feat to Added (not Changed)", () => {
+		const result = writerOpts.transform(
+			makeCommit({
+				type: "feat",
+				header: "feat!: drop Node 18",
+				subject: "drop Node 18",
+				notes: [{ title: "BREAKING CHANGE", text: "Node 18 dropped" }],
+				raw: {
+					...makeCommit().raw,
+					notes: [{ title: "BREAKING CHANGE", text: "Node 18 dropped" }],
+				},
+			}),
+		);
+		expect(result).not.toBeNull();
+		expect(result?.section).toBe("Added");
 	});
 
 	it("truncates hash to 7 characters", () => {

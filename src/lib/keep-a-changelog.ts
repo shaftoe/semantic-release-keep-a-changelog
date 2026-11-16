@@ -4,8 +4,10 @@ import { KAC_SECTIONS, OMITTED_TYPES, TYPE_TO_SECTION } from "./constants.js";
  * Keep a Changelog writer configuration for conventional-changelog-writer.
  *
  * This provides:
- * - transform: maps commit types to KaC sections, omits irrelevant types,
- *   special-cases `chore(deps)` (Dependabot default) → Changed
+ * - transform: maps commit types (case-insensitively) to KaC sections, omits
+ *   irrelevant types, special-cases `chore(deps)` (Dependabot default) → Changed,
+ *   and keeps breaking-change commits (via `!` or `BREAKING CHANGE:` footer)
+ *   even on otherwise-omitted types
  * - groupBy: groups by the mapped section name
  * - commitGroupsSort: sorts sections in KaC order
  * - commitsSort: sorts commits within a section by subject
@@ -18,6 +20,12 @@ import { KAC_SECTIONS, OMITTED_TYPES, TYPE_TO_SECTION } from "./constants.js";
 interface RenderCommit {
 	scope?: string;
 	subject?: string;
+}
+
+/** Parsed footer note, e.g. a `BREAKING CHANGE:` footer. */
+interface CommitNote {
+	title: string;
+	text: string;
 }
 
 /** Commit group with title and commits. */
@@ -49,7 +57,7 @@ export interface TransformedCommit {
 	header: string;
 	body: string;
 	footer: string;
-	notes: unknown[];
+	notes: CommitNote[];
 	references: unknown[];
 	mentions: string[];
 	revert: boolean | null;
@@ -63,7 +71,7 @@ export interface TransformedCommit {
 		header: string;
 		body: string;
 		footer: string;
-		notes: unknown[];
+		notes: CommitNote[];
 		references: unknown[];
 		mentions: string[];
 		merge: boolean;
@@ -77,22 +85,48 @@ const sectionOrder: Map<string, number> = new Map(
 	KAC_SECTIONS.map((section, index) => [section as string, index]),
 );
 
+/** Header pattern for `!` breaking-change notation (e.g. `feat!:`). */
+const BREAKING_HEADER_PATTERN = /^(?:\w*)(?:\(.*\))?!: /;
+
+/**
+ * A commit is breaking if it has a `BREAKING CHANGE` / `BREAKING-CHANGE`
+ * footer note or uses the `!` header notation (which the parser does not
+ * convert into a note).
+ */
+function isBreakingCommit(commit: TransformedCommit): boolean {
+	if (
+		commit.notes?.some((note) =>
+			note?.title?.toUpperCase().startsWith("BREAKING"),
+		)
+	) {
+		return true;
+	}
+	return BREAKING_HEADER_PATTERN.test(commit.header ?? "");
+}
+
 export const writerOpts = {
 	transform: (commit: TransformedCommit): Partial<TransformedCommit> | null => {
+		// Normalize the type case — Conventional Commits allows any casing
+		// (e.g. `FEAT:`), the parser preserves it verbatim
+		const type = (commit.type ?? "").toLowerCase();
+
 		// Map the commit type to a Keep a Changelog section
-		let section = TYPE_TO_SECTION[commit.type];
+		let section = TYPE_TO_SECTION[type];
 
 		// Special case: Dependabot uses `chore(deps)` / `chore(deps-dev)` — map to Changed
-		if (
-			!section &&
-			commit.type === "chore" &&
-			commit.scope?.startsWith("deps")
-		) {
+		if (!section && type === "chore" && commit.scope?.startsWith("deps")) {
+			section = "Changed";
+		}
+
+		// Breaking changes must never be dropped, even on otherwise-omitted
+		// types (e.g. `build!:` or `build:` with a `BREAKING CHANGE:` footer,
+		// which still cut a release) — map to Changed
+		if (!section && isBreakingCommit(commit)) {
 			section = "Changed";
 		}
 
 		// Omit commits that don't map to any KaC section or are in the omitted set
-		if (!section || (OMITTED_TYPES.has(commit.type) && section !== "Changed")) {
+		if (!section || (OMITTED_TYPES.has(type) && section !== "Changed")) {
 			return null;
 		}
 
