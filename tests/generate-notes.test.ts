@@ -252,6 +252,117 @@ describe("generateNotes", () => {
 		expect(result).toContain("redesign API");
 	});
 
+	it("handles scope containing a slash", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "feat(api/v2): add v2 route",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Added");
+		expect(result).toContain("**api/v2**");
+		expect(result).toContain("add v2 route");
+	});
+
+	it("handles scope containing @", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "feat(@acme/core): add workspace helper",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Added");
+		expect(result).toContain("**@acme/core**");
+		expect(result).toContain("add workspace helper");
+	});
+
+	it("maps uppercase commit type to its section", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "FEAT: support uppercase type",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Added");
+		expect(result).toContain("support uppercase type");
+	});
+
+	it("maps nested deps scope chore to Changed", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "chore(deps/npm): bump vitest",
+					committerDate: "2024-01-01",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Changed");
+		expect(result).toContain("bump vitest");
+	});
+
+	it("keeps breaking change commit on omitted type under Changed", async () => {
+		const context = makeContext({
+			commits: [
+				{
+					hash: "a1b2c3d",
+					message: "build!: drop Node 18 support",
+					committerDate: "2024-01-01",
+				},
+				{
+					hash: "b2c3d4e",
+					message:
+						"build: require Node 20\n\nBREAKING CHANGE: Node 18 is no longer supported",
+					committerDate: "2024-01-02",
+				},
+				// Non-breaking build commit should still be omitted
+				{
+					hash: "c3d4e5f",
+					message: "build: bump webpack",
+					committerDate: "2024-01-03",
+				},
+			],
+		});
+		const result = await generateNotes(
+			{},
+			context as Parameters<typeof generateNotes>[1],
+		);
+		expect(result).toBeDefined();
+		expect(result).toContain("### Changed");
+		expect(result).toContain("drop Node 18 support");
+		expect(result).toContain("require Node 20");
+		expect(result).not.toContain("bump webpack");
+	});
+
 	it("produces version header even with no commits", async () => {
 		const context = makeContext({
 			commits: [],

@@ -47,9 +47,17 @@ Conventional commit types are mapped to Keep a Changelog sections:
 | `perf`, `refactor`, `docs`, `style` | Changed |
 | `revert` | Removed |
 
-Breaking changes via `!` suffix (e.g. `feat!:`) and `BREAKING CHANGE:` footers are fully supported.
+Breaking changes via `!` suffix (e.g. `feat!:`) and `BREAKING CHANGE:` footers are fully supported. This also applies to otherwise-omitted types: breaking commits like `build!:` or `build:` with a `BREAKING CHANGE:` footer are kept (under **Changed**), matching @semantic-release/commit-analyzer, which cuts a release for them.
 
-Commit types `test`, `ci`, `build`, `chore` are silently omitted, with one exception: `chore(deps)` and `chore(deps-dev)` commits (the default format used by Dependabot and similar tools) are mapped to **Changed** instead of being dropped.
+Commit types `test`, `ci`, `build`, `chore` are silently omitted, with two exceptions:
+
+- `chore(deps)` and `chore(deps-dev)` commits (the default format used by Dependabot and similar tools) are mapped to **Changed** instead of being dropped. This includes nested scopes such as `chore(deps/npm)`.
+- Breaking-change commits on these types (via `!` or a `BREAKING CHANGE:` footer) are mapped to **Changed** instead of being dropped.
+
+Additional parsing notes (per the [Conventional Commits spec](https://www.conventionalcommits.org/)):
+
+- Type matching is case-insensitive: `FEAT:` and `Fix:` are parsed like `feat:` and `fix:`.
+- Scopes may contain `@` and `/`: scopes like `api/v2` or `@acme/core` are preserved.
 
 ## Limitations
 

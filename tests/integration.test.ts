@@ -305,6 +305,67 @@ describe("integration: full release pipeline", () => {
 		}
 	});
 
+	it("includes scoped, uppercase, and breaking omitted-type commits", async () => {
+		const cwd = await makeTmpDir();
+		try {
+			const content = await simulateRelease({
+				commits: [
+					{
+						hash: "sco11111",
+						message: "feat(api/v2): add v2 route",
+						committerDate: "2024-01-01",
+					},
+					{
+						hash: "sco22222",
+						message: "feat(@acme/core): add workspace helper",
+						committerDate: "2024-01-02",
+					},
+					{
+						hash: "sco33333",
+						message: "FEAT: support uppercase type",
+						committerDate: "2024-01-03",
+					},
+					{
+						hash: "brk44444",
+						message: "build!: drop Node 18 support",
+						committerDate: "2024-01-04",
+					},
+					{
+						hash: "brk55555",
+						message:
+							"build: require Node 20\n\nBREAKING CHANGE: Node 18 is no longer supported",
+						committerDate: "2024-01-05",
+					},
+					{
+						hash: "brk66666",
+						message: "ci: update workflow",
+						committerDate: "2024-01-06",
+					},
+				],
+				lastRelease: { gitTag: "v1.2.3" },
+				nextRelease: { version: "2.0.0", gitTag: "v2.0.0" },
+				cwd,
+			});
+
+			// feat commits (any scope, any case) map to Added
+			expect(content).toContain("add v2 route");
+			expect(content).toContain("add workspace helper");
+			expect(content).toContain("support uppercase type");
+
+			// breaking changes on omitted types map to Changed
+			expect(content).toContain("drop Node 18 support");
+			expect(content).toContain("require Node 20");
+
+			// non-breaking omitted types stay omitted
+			expect(content).not.toContain("update workflow");
+
+			// Produced markdown must be valid
+			expectValidMarkdown(content);
+		} finally {
+			await rm(cwd, { recursive: true, force: true });
+		}
+	});
+
 	it("works with SSH repository URL", async () => {
 		const cwd = await makeTmpDir();
 		try {
