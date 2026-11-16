@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.2] - 2026-11-16
+
+### Changed
+
+- **deps-dev**: update pnpm to v12.16.1 (#87)
+- **deps-dev**: update pnpm to v12.18.0 (#89)
+
+### Fixed
+
+- keep scoped, breaking, and uppercase-type commits in release notes (#93)
+
 ## [0.6.1] - 2026-10-21
 
 ### Changed
@@ -252,7 +263,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - first release
 
-[unreleased]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.6.1...HEAD
+[unreleased]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.6.2...HEAD
+[0.6.2]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.6.1...v0.6.2
 [0.6.1]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.6.0...v0.6.1
 [0.6.0]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.5.1...v0.6.0
 [0.5.1]: https://github.com/shaftoe/semantic-release-keep-a-changelog/compare/v0.5.0...v0.5.1
