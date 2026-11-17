@@ -16,10 +16,10 @@ In `.releaserc.json`:
 
 ```json
 {
-  "plugins": [
-    "@semantic-release/commit-analyzer",
-    "@alexanderfortin/semantic-release-keep-a-changelog"
-  ]
+	"plugins": [
+		"@semantic-release/commit-analyzer",
+		"@alexanderfortin/semantic-release-keep-a-changelog"
+	]
 }
 ```
 
@@ -31,21 +31,21 @@ That's it. No configuration keys, no options. The plugin will:
 
 ## What it does
 
-| Lifecycle | Responsibility |
-|---|---|
+| Lifecycle       | Responsibility                                                                  |
+| --------------- | ------------------------------------------------------------------------------- |
 | `generateNotes` | Parse conventional commits → map to Keep a Changelog sections → render markdown |
-| `prepare` | Merge new notes into existing `CHANGELOG.md` → write file |
+| `prepare`       | Merge new notes into existing `CHANGELOG.md` → write file                       |
 
 ## Type Mapping
 
 Conventional commit types are mapped to Keep a Changelog sections:
 
-| Commit Type | KaC Section |
-|---|---|
-| `feat` | Added |
-| `fix` | Fixed |
-| `perf`, `refactor`, `docs`, `style` | Changed |
-| `revert` | Removed |
+| Commit Type                         | KaC Section |
+| ----------------------------------- | ----------- |
+| `feat`                              | Added       |
+| `fix`                               | Fixed       |
+| `perf`, `refactor`, `docs`, `style` | Changed     |
+| `revert`                            | Removed     |
 
 Breaking changes via `!` suffix (e.g. `feat!:`) and `BREAKING CHANGE:` footers are fully supported. This also applies to otherwise-omitted types: breaking commits like `build!:` or `build:` with a `BREAKING CHANGE:` footer are kept (under **Changed**), matching @semantic-release/commit-analyzer, which cuts a release for them.
 

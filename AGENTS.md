@@ -4,7 +4,6 @@ This file contains important rules and guidelines for AI agents working on this 
 
 ## Code Quality and Testing Requirements
 
-
 - Use pnpm (v12+) as package manager and vitest as test suite. Never use `npm` or `bun` unless strictly necessary
 - Don't use `Date()` APIs, only Temporal use with polyfill is allowed
 
